@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Capture Webcam Frame</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  <body>
+    <video
+      id="video"
+      width="640"
+      height="480"
+      style="display: none"
+      autoplay
+    ></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+  </body>
+</html>
+<script>
+  // Lấy đối tượng video và canvas từ DOM
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const context = canvas.getContext("2d");
+
+  // Kiểm tra xem trình duyệt có hỗ trợ API MediaDevices không
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then(function (stream) {
+        // Gắn luồng video lên đối tượng video
+        video.srcObject = stream;
+      })
+      .catch(function (error) {
+        console.error("Lỗi truy cập vào webcam: ", error);
+      });
+  }
+
+  function drawBoundingBoxWithLabel(x, y, width, height, label) {
+    // Vẽ khung vật thể
+    context.beginPath();
+    context.lineWidth = "1";
+    context.strokeStyle = "red";
+    context.rect(x, y, width, height);
+    context.stroke();
+
+    // Vẽ nhãn
+    context.font = "18px Arial";
+    context.fillStyle = "red";
+    context.fillText(label, x, y - 5);
+  }
+
+  function AutoRun() {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Chuyển đổi frame ảnh sang base64 để gửi lên máy chủ
+    const imageData = canvas.toDataURL("image/jpeg");
+
+    // Gửi frame ảnh qua Ajax request tới máy chủ Python
+    $.ajax({
+      type: "POST",
+      url: "/detect", // Endpoint trên phía Python
+      data: { frame: imageData },
+      success: function (response) {
+        var result = JSON.parse(response);
+        var ArrResult = result["objects"];
+        console.log(response);
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ArrResult.forEach(object => {
+                    var label = object["label"];
+                    var x1 = object["x1"];
+                    var x2 = object["x2"];
+                    var y1 = object["y1"];
+                    var y2 = object["y2"];
+                    console.log(label, x1, x2, y1, y2);
+
+                    drawBoundingBoxWithLabel(x1, y1, x2-x1, y2-y1, label)
+
+                  })
+        console.log(ArrResult);
+      },
+      error: function (xhr, status, error) {
+        console.error("Lỗi gửi frame: ", error, status);
+      },
+    });
+  }
+  setInterval(AutoRun, 0);
+  <!--    setTimeout(AutoRun, 1000);-->
+
+  <!--    video.addEventListener("play", AutoRun());-->
+</script>
