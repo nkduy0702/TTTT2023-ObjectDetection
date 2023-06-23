@@ -57,25 +57,24 @@
     // Gửi frame ảnh qua Ajax request tới máy chủ Python
     $.ajax({
       type: "POST",
-      url: "/detect", // Endpoint trên phía Python
+      url: "http://127.0.0.1:1472/sendFrame", // Endpoint trên phía Python
       data: { frame: imageData },
+      // contentType: 'application/json',
       success: function (response) {
-        var result = JSON.parse(response);
-        var ArrResult = result["objects"];
+        var ArrResult = response["objects"];
         console.log(response);
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        ArrResult.forEach(object => {
-                    var label = object["label"];
-                    var x1 = object["x1"];
-                    var x2 = object["x2"];
-                    var y1 = object["y1"];
-                    var y2 = object["y2"];
-                    console.log(label, x1, x2, y1, y2);
+        ArrResult.forEach((object) => {
+          var label = object["label"];
+          var x1 = object["x1"];
+          var x2 = object["x2"];
+          var y1 = object["y1"];
+          var y2 = object["y2"];
+          console.log(label, x1, x2, y1, y2);
 
-                    drawBoundingBoxWithLabel(x1, y1, x2-x1, y2-y1, label)
-
-                  })
-        console.log(ArrResult);
+          drawBoundingBoxWithLabel(x1, y1, x2 - x1, y2 - y1, label);
+        });
+        // console.log(ArrResult);
       },
       error: function (xhr, status, error) {
         console.error("Lỗi gửi frame: ", error, status);
@@ -83,7 +82,7 @@
     });
   }
   setInterval(AutoRun, 0);
-  <!--    setTimeout(AutoRun, 1000);-->
+     // setTimeout(AutoRun, 1000);
 
   <!--    video.addEventListener("play", AutoRun());-->
 </script>

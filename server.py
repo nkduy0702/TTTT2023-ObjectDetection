@@ -1,4 +1,8 @@
+import requests
 from flask import Flask, request, render_template
+import pickle
+
+
 import base64
 from PIL import Image
 import json
@@ -8,6 +12,8 @@ from tf2_yolov4.anchors import YOLOV4_ANCHORS
 from tf2_yolov4.model import YOLOv4
 
 app = Flask(__name__)
+
+
 
 
 WIDTH, HEIGHT = (640, 480)
@@ -38,7 +44,10 @@ CLASSES = [
     ]
 @app.route('/detect', methods=['POST'])
 def detect_objects():
-    image_data = request.form['frame']
+    image_data = request.get_json()
+    print(image_data)
+    # image_data = json.dumps(img_data)
+    # image_data = request.form['frame']
     image_data = image_data.replace('data:image/jpeg;base64,', '')
 
 
@@ -79,12 +88,11 @@ def detect_objects():
 
 
     response_data = {'objects': objects}
-    print(objects)
+    # print(objects)
     # return response
     return json.dumps( response_data )
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+
+
 if __name__ == '__main__':
     app.run(port = 1407)
