@@ -34,25 +34,26 @@
       });
   }
 
+  function drawBoundingBoxWithLabel(x, y, width, height, label) {
+    // Vẽ khung vật thể
+    context.beginPath();
+    context.lineWidth = "1";
+    context.strokeStyle = "red";
+    context.rect(x, y, width, height);
+    context.stroke();
 
-  // function drawBoundingBoxWithLabel(x, y, width, height, label) {
-  //   // Vẽ khung vật thể
-  //   context.beginPath();
-  //   context.lineWidth = "1";
-  //   context.strokeStyle = "red";
-  //   context.rect(x, y, width, height);
-  //   context.stroke();
-  //
-  //   // Vẽ nhãn
-  //   context.font = "18px Arial";
-  //   context.fillStyle = "red";
-  //   context.fillText(label, x, y - 5);
-  // }
+    // Vẽ nhãn
+    context.font = "18px Arial";
+    context.fillStyle = "red";
+    context.fillText(label, x, y - 5);
+  }
 
   function AutoRun() {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
     // Chuyển đổi frame ảnh sang base64 để gửi lên máy chủ
     const imageData = canvas.toDataURL("image/jpeg");
+
     // Gửi frame ảnh qua Ajax request tới máy chủ Python
     $.ajax({
       type: "POST",
@@ -60,27 +61,26 @@
       data: { frame: imageData },
       success: function (response) {
         var ArrResult = response["objects"];
-        console.log(ArrResult);
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        console.log(response);
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
         ArrResult.forEach((object) => {
-          context.beginPath();
-          context.rect(object.x1, object.y1, object.x2 - object.x1, object.y2 - object.y1);
-          context.lineWidth = 2;
-          context.strokeStyle = 'red';
-          context.font = "16px Arial";
-          context.fillStyle = 'red';
-          context.stroke();
-          context.fillText(object.label, object.x1, object.y1 - 5);
+          var label = object["label"];
+          var x1 = object["x1"];
+          var x2 = object["x2"];
+          var y1 = object["y1"];
+          var y2 = object["y2"];
+          console.log(label, x1, x2, y1, y2);
+
+          drawBoundingBoxWithLabel(x1, y1, x2 - x1, y2 - y1, label);
         });
+        console.log(ArrResult);
       },
       error: function (xhr, status, error) {
         console.error("Lỗi gửi frame: ", error, status);
       },
     });
   }
-  setInterval(AutoRun, 80);
+  setInterval(AutoRun, 0);
      // setTimeout(AutoRun, 1000);
 
   <!--    video.addEventListener("play", AutoRun());-->

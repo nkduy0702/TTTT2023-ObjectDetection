@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Object Detection</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+</head>
+<body>
+    <h1>Object Detection</h1>
+     <video
+      id="video"
+      width="640"
+      height="480"
+      style = "display: none"
+      autoplay
+    ></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+
+    <script>
+        var video = document.getElementById('video');
+        var canvas = document.getElementById('canvas');
+        var context = canvas.getContext('2d');
+
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices
+              .getUserMedia({ video: true })
+              .then(function (stream) {
+                // Gắn luồng video lên đối tượng video
+                video.srcObject = stream;
+              })
+              .catch(function (error) {
+                console.error("Lỗi truy cập vào webcam: ", error);
+              });
+        }
+
+        var socket = io.connect('http://127.0.0.1:1111');
+
+        socket.on('connect', function() {
+            console.log('Connected to server');
+        });
+
+        socket.on('disconnect', function() {
+            console.log('Disconnected from server');
+        });
+
+        socket.on('objects', function(objects) {
+            var canvas = document.getElementById('canvas');
+            var context = canvas.getContext('2d');
+            // context.clearRect(0, 0, canvas.width, canvas.height);
+            // context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            console.log(objects)
+
+            for (var i = 0; i < objects.length; i++) {
+                var object = objects[i];
+
+                context.beginPath();
+                context.rect(object.x, object.y, object.width, object.height);
+                context.lineWidth = 2;
+                context.strokeStyle = 'red';
+                context.font = "16px Arial";
+                context.fillStyle = 'red';
+                context.stroke();
+                context.fillText(object.label, object.x, object.y - 5);
+            }
+        });
+
+        function captureImage() {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            var imageData = canvas.toDataURL('image/jpeg');
+            socket.emit('frame', imageData);
+        }
+
+       setInterval(captureImage, 150)
+       //  setTimeout(captureImage,1000)
+
+    </script>
+</body>
+</html>

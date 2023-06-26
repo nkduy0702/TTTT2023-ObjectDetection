@@ -1,7 +1,6 @@
-import requests
-from flask import Flask, request, render_template
-import pickle
 
+from flask import Flask, request
+import time
 
 import base64
 from PIL import Image
@@ -12,7 +11,6 @@ from tf2_yolov4.anchors import YOLOV4_ANCHORS
 from tf2_yolov4.model import YOLOv4
 
 app = Flask(__name__)
-
 
 
 
@@ -42,31 +40,24 @@ CLASSES = [
         'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book',
         'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush'
     ]
+
 @app.route('/detect', methods=['POST'])
 def detect_objects():
+
     image_data = request.get_json()
-    print(image_data)
-    # image_data = json.dumps(img_data)
-    # image_data = request.form['frame']
+
     image_data = image_data.replace('data:image/jpeg;base64,', '')
 
 
     image_bytes = base64.b64decode(image_data)
     image = Image.open(io.BytesIO(image_bytes))
-    # image.show()
-
     image = image.resize((WIDTH, HEIGHT))
 
     image = tf.expand_dims(image, axis=0) / 255
 
-    # image_array = np.frombuffer(image_bytes, np.uint8)
-    # image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
-
-
     # run model
     boxes, scores, classes, detections = model.predict(image)
 
-    # create response
     boxes = boxes[0] * [WIDTH, HEIGHT, WIDTH, HEIGHT]
     scores = scores[0]
     classes = classes[0].astype(int)
@@ -85,11 +76,8 @@ def detect_objects():
                 x1, y1, x2, y2 = int( xmin ), int( ymin ), int( xmax ), int( ymax )
                 object_data = {'label': label, 'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
                 objects.append( object_data )
-
-
     response_data = {'objects': objects}
-    # print(objects)
-    # return response
+    print(objects)
     return json.dumps( response_data )
 
 
